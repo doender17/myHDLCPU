@@ -1,52 +1,10 @@
-from random import randrange
-
 from myhdl import *
+from examples.TimeCount import TimeCount
 
 LOW, HIGH = bool(0), bool(1)
 MAX_COUNT = 6 * 10 * 10
 PERIOD = 10
 expectations = []
-
-@block
-def TimeCount(tens, ones, tenths, startstop, reset, clock):
-
-    @instance
-    def logic():
-        seen = False
-        counting = False
-
-        while True:
-            yield clock.posedge, reset.posedge
-
-            if reset:
-                tens.next = 0
-                ones.next = 0
-                tenths.next = 0
-                seen = False
-                counting = False
-            else:
-                if startstop and not seen:
-                    seen = True
-                    counting = not counting
-                elif not startstop:
-                    seen = False
-
-                if counting:
-                    if tenths == 9:
-                        tenths.next = 0
-                        if ones == 9:
-                            ones.next = 0
-                            if tens == 5:
-                                tens.next = 0
-                            else:
-                                tens.next = tens + 1
-                        else:
-                            ones.next = ones + 1
-                    else:
-                        tenths.next = tenths + 1
-
-    return logic
-
 
 @block
 def bench():
@@ -96,16 +54,31 @@ def bench():
         yield clock.posedge
         expectations.append((LOW, 0, 1, 0))
         yield clock.negedge
-        startstop.next = HIGH
+        for i in range(89):
+            yield clock.posedge
+            yield clock.negedge
         yield clock.posedge
-        expectations.append((LOW, 0, 1, 0))
+        expectations.append((LOW, 1, 0, 0))
         yield clock.negedge
+
+        for i in range(499):
+            yield clock.posedge
+            yield clock.negedge
+
         yield clock.posedge
+        expectations.append((LOW, 0, 0, 0))
+        yield clock.negedge
+
         raise StopSimulation
 
     return dut, clk, monitor, stimulus
 
 
 def test_bench():
-    sim = Simulation(bench())
+    b = bench()
+    sim = Simulation(b)
+    traceSignals.tracebackup = False
+    traceSignals.directory = "../traces"
+    traceSignals.filename = "TimeCount"
+    traceSignals(b)
     sim.run()
