@@ -2,12 +2,13 @@ from myhdl import *
 from riscv import alu
 
 LOW, HIGH = bool(0), bool(1)
+CPUBITS = 32
 PERIOD = 10
 
 @block
 def bench():
     opcode = Signal(intbv(0)[4:])
-    opA, opB, result = [Signal(intbv(0)[32:]) for i in range(3)]
+    opA, opB, result = [Signal(intbv(0)[CPUBITS:]) for i in range(3)]
     zero = Signal(intbv(0)[1:])
     clock = Signal(LOW)
     dut = alu.alu(opcode, opA, opB, result, zero)
